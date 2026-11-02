@@ -51,6 +51,10 @@ Flash `bench/bench.ino` for the sensor alone. Open `bench.html` on localhost in 
 
 *Three states, three thresholds: EMPTY when nothing echoes back (this photo predates the fix that shows `---` instead of 400), HERE closer than 120 cm, NEAR closer than 30 cm. That's a State Table, drawn on a screen. Yours will have different words and different numbers.* The screen's badge thresholds are for the screen only; your real State Table still lives in the browser. It's an extra for after the sensor works, never instead of it.
 
+### Standalone Arduino examples
+
+The `distance-led` and `names-distance` folders are optional Arduino sketches for trying a local LED response or a small state table. Open each folder's matching `.ino` file as its own sketch in the Arduino IDE. Do not copy these `.ino` files into `bench/`: Arduino compiles `.ino` files together when they are in the same sketch folder. For the browser piece, keep using `bench/bench.ino`, which prints the sensor reading for `bench.html`.
+
 ## What's on the shelf
 
 | Sensor | A signal it can give | Watch for |

@@ -26,7 +26,7 @@ void loop() {
 
   if (cm < LINE - GAP) near = true;            // clearly closer than the line
   if (cm > LINE + GAP) near = false;           // clearly back past it
-  digitalWrite(LED, near ? HIGH : LOW);       // the response
+  digitalWrite(LED, near ? HIGH : LOW);        // the response
 
   Serial.print("cm ");                         // same format bench.html reads
   Serial.println(cm, 1);
