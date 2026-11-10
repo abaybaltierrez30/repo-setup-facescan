@@ -12,12 +12,13 @@
 // Keep "nobody" last, so it catches everything the other rows miss.
 
 window.TABLE = {
-  // The HC-SR04 example. Replace these with your own signals and rows.
-  signals: ['present', 'near'],
+  // Matches the two rows in names-distance.ino:
+  // - present: distance under 100 cm for 1 second
+  // - nobody: distance over 100 cm for 5 seconds
+  signals: ['present'],
 
   states: [
-    { name: 'close',  when: s => s.near > 0.85,   hold: 0.5 },
-    { name: 'here',   when: s => s.present > 0.5, hold: 1 },
-    { name: 'nobody', when: s => s.present < 0.2, hold: 2 },
+    { name: 'present', when: s => s.present > 0.8, hold: 1.0 },
+    { name: 'nobody',  when: s => s.present < 0.2, hold: 5.0 },
   ],
 };

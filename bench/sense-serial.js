@@ -21,9 +21,9 @@ const SIGNALS = {
   // near: 1 at the sensor, 0 at two metres or more.
   near: r => (r.cm === undefined ? 0 : clamp((200 - r.cm) / 190)),
 
-  // present: someone within a metre and a half. Smoothed below, so one bad
-  // echo does not count as somebody leaving.
-  present: r => (r.cm !== undefined && r.cm < 150 ? 1 : 0),
+  // present: somebody within 100 cm. This matches the bench table logic in
+  // names-distance.ino: under 100 cm is present, over 100 cm is nobody.
+  present: r => (r.cm !== undefined && r.cm < 100 ? 1 : 0),
 
   // Your signal goes here. A photoresistor printed as "light":
   //   shade: r => (r.light === undefined ? 0 : clamp(1 - r.light / 1023)),
