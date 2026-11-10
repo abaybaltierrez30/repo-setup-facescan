@@ -28,12 +28,13 @@ function colorFor(state) {
 function frame() {
   const { state, signals, since } = window.sense;
   const held = performance.now() - since; // ms in this state
+  const signalValue = signals.present ?? signals.open ?? signals.near ?? 0;
 
   ctx.fillStyle = colorFor(state);
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   if (state !== 'nobody') {
-    const r = Math.min(canvas.width, canvas.height) * (0.05 + 0.35 * (signals.open || 0));
+    const r = Math.min(canvas.width, canvas.height) * (0.05 + 0.35 * signalValue);
     const fadeIn = Math.min(1, held / 600);
     ctx.globalAlpha = fadeIn;
     ctx.fillStyle = '#f2efe9';
