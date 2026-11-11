@@ -39,6 +39,10 @@ This one works, end to end: a Nano and an HC-SR04 on a breadboard, with an optio
 
 Flash `bench/bench.ino` for the sensor alone. Open `bench.html` on localhost in Chrome, click **Connect the Arduino**, and pick the board. Press **D**: a hand at about 40 cm or closer reads `close`, further away reads `here`, and an empty room reads `nobody` after two seconds.
 
+### Standalone Arduino examples
+
+The `distance-led` and `names-distance` folders are optional Arduino sketches for trying a local LED response or a small state table. Open each folder's matching `.ino` file as its own sketch in the Arduino IDE. Keep these sketches in their separate folders: Arduino compiles `.ino` files together when they are in the same sketch folder. For the browser piece, keep using `bench/bench.ino`, which prints the sensor reading for `bench.html`.
+
 **The lag is the table, not the wire.** Each row's hold (0.5, 1 and 2 seconds in `bench/table-bench.js`) is how long a rule has to stay true before the state changes, and the readings are smoothed so one bad echo doesn't count. Short holds feel instant and flicker; long holds feel calm and slow. Choosing them is part of your table.
 
 **If the upload fails** with `not in sync` or `programmer is not responding`, the Nano has the old bootloader, which is common on clone boards. In the Arduino IDE choose **Tools → Processor → ATmega328P (Old Bootloader)** and upload again (in `arduino-cli`, the board is `arduino:avr:nano:cpu=atmega328old`). After a failed upload, unplug the Nano and plug it back in before the next try, because the port can stay stuck.
@@ -81,4 +85,3 @@ Mr. Reasy's own bench sensors, lent to pairs whose simple sensor already works i
 | Load cell, 10 kg or 15 kg bar | `loaded`, `weight` | Needs an amplifier board (HX711 or NAU7802) | Nano | Moderate once the amplifier is in hand. Ask Mr. Reasy whether one is free before you plan on it. |
 
 Same rule as the shelf: the sensor gives a number and your State Table gives it a meaning. A radar `count` of 2 is two bodies in range, not a crowd that wants anything.
-
