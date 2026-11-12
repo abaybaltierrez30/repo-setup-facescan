@@ -64,8 +64,8 @@ void loop() {
       digitalWrite(LED, HIGH);
       tone(BUZZ, 440, 100);
       break;
-    case 1:                                     // nobody: light blinks, no sound
-      digitalWrite(LED, (now / 250) % 2);
+    case 1:                                     // nobody: light off, no sound
+      digitalWrite(LED, LOW);
       break;
     default:                                    // dark and quiet until a row wins
       digitalWrite(LED, LOW);
