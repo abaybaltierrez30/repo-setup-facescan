@@ -53,7 +53,9 @@ If the readout says the face library did not load, the school network is blockin
 
 The bench track swaps the sense layer and nothing else. `piece.js` and `fake-sense.js` stay exactly as they are. The wiring, a photo of a working build and upload fixes are in `bench/README.md`.
 
-1. Build the circuit and flash `bench/bench.ino` from the Arduino IDE. It prints one line per reading, like `cm 42.5`. Check it in the IDE's Serial Monitor at 115200, then **close the Serial Monitor**: only one program can hold the port.
+Important: Arduino IDE uploads a single sketch folder, not a loose `main.cpp` file. The PlatformIO project uses `src/main.cpp`, but the Arduino IDE must open a sketch such as `bench/bench/bench.ino` instead. The `bench` examples are stored in their own folders so each one uploads by itself.
+
+1. Build the circuit and flash `bench/bench/bench.ino` from the Arduino IDE by opening the `bench/bench` folder and choosing **Upload**. It prints one line per reading, like `cm 42.5`. Check it in the IDE's Serial Monitor at 115200, then **close the Serial Monitor**: only one program can hold the port.
 2. Open **`bench.html`** instead of `index.html`, on localhost in **Chrome**. It loads the bench table and the serial sense layer; nothing to edit.
 3. Click **Connect the Arduino** and pick the board. Press **D** to see the raw line and your signals.
 4. Your State Table lives in **`bench/table-bench.js`** (same format as `table.js`). Your signal is a function in `SIGNALS` in `bench/sense-serial.js`: it gets the latest reading (`{ cm: 42.5 }`) and returns 0 to 1. Add the sensor to the sketch's printed line, then its function, then its name in `bench/table-bench.js`.
@@ -70,3 +72,28 @@ The instrument is MediaPipe Face Landmarker, pinned to version 1.1.1, the same o
 - Alexander Bay Baltierrez
 - Sensor: laptop webcam
 - Live: https://abaybaltierrez30.github.io/repo-setup-facescan/
+
+## Rule:
+
+When the reading goes under 100 cm, someone's presence is detected and listed.
+Three reading examples:
+cm 42.7 name 1 present
+cm 62.6 name 1 present
+cm 123.5 name 2 nobody
+
+## Break log:
+Merge pull request #12 (not finished yet as of writing): Porting INO changes from VS Code to Arduino IDE. Technical difficulties made porting INO code data from VS Code to the Arduino IDE app a hassle, until we eventually realized we had to upload in the IDE app to process our changes.
+Merge pull request #12/#11/fixes #6: nobody state leaves LED off - LED doesn't go off. Instead, it blinks, but the files we have been working with hint to blinking when off, so we are keeping the blinking in "nobody" state for now.
+(Some commit between Isolate standalone and #11:) - Readings failing to sync up with localhost sensor website. We have synced the code to the IDE and tested both the IDE and localhost to check and also get the readings working.
+
+## Photos/wiring: 
+Wiring:
+sensor TRIG to 5V (C12 on board) from H20 on board (VCC ultrasonic)
+sensor ECHO to D10 (J3 on board) from I18 on board (Echo ultrasonic)
+LED long leg (B17 on board from wire) to D5 (I8 on board), 
+GND on ultrasonic (I17 on board) to GND on Arduino board (C14)
+TRIG on ultrasonic (I19 on board) to  D9 (J4 on board)
+Photos:
+- [IMG_0426.HEIC](bench/img/IMG_0426.HEIC)
+- [IMG_0427.HEIC](bench/img/IMG_0427.HEIC)
+
