@@ -8,6 +8,8 @@ An Arduino Nano and two sensors in place of the camera. The bench swaps the sens
 
 The kits come apart, so building the circuit is part of your work.
 
+Important: in the Arduino IDE, each sketch must live in its own folder. Open the folder that matches the sketch you want to upload, such as `bench/bench/` for the simple distance sensor, then click **Upload**. Do not try to upload `src/main.cpp` from this repo in the Arduino IDE; that file is only for PlatformIO.
+
 1. A Nano, a breadboard and jumpers from the north racks in the Innovation Commons. If the Nano's header pins aren't soldered yet, that comes first. Ask Mr. Reasy before you heat an iron.
 2. Two sensors on the one Nano, one per partner. Wire each one and check it in the Arduino IDE's Serial Monitor at 115200 before the browser sees it.
 3. Add your sensor's number to the line `bench.ino` prints (`Serial.print(" light "); Serial.print(analogRead(A0));`), then its function in `SIGNALS` in `sense-serial.js`, then its name in `bench/table-bench.js`.
@@ -37,7 +39,7 @@ This one works, end to end: a Nano and an HC-SR04 on a breadboard, with an optio
 
 *Ours is a US-025A, a clone of the HC-SR04. Same four pins in the same order (VCC, Trig, Echo, GND), same wiring, same sketch. Either board works.*
 
-Flash `bench/bench.ino` for the sensor alone. Open `bench.html` on localhost in Chrome, click **Connect the Arduino**, and pick the board. Press **D**: a hand at about 40 cm or closer reads `close`, further away reads `here`, and an empty room reads `nobody` after two seconds.
+Flash `bench/bench/bench.ino` for the sensor alone by opening the `bench/bench` folder in the Arduino IDE. Open `bench.html` on localhost in Chrome, click **Connect the Arduino**, and pick the board. Press **D**: a hand at about 40 cm or closer reads `close`, further away reads `here`, and an empty room reads `nobody` after two seconds.
 
 ### Standalone Arduino examples
 

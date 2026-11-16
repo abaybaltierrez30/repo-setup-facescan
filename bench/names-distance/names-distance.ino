@@ -18,8 +18,8 @@ const int LED = 5;           // LED long leg to D5, short leg through a 220 ohm 
 const int BUZZ = 6;          // buzzer plus to D6, minus to GND
 
 bool on[ROWS];               // is each row true right now?
-unsigned long since[ROWS];   // when each row turned true
-int current = ROWS - 1;      // the name now. It starts as nobody.
+unsigned long since[ROWS];    // when each row turned true
+int current = ROWS - 1;       // the name now. It starts as nobody.
 
 void setup() {
   Serial.begin(115200);
@@ -43,7 +43,7 @@ void loop() {
     float edge = rows[i].line;
     float gap = rows[i].gap;
     if (rows[i].over) {
-      if (cm > edge + gap) on[i] = true;
+      if (cm >= edge + gap) on[i] = true;
       if (cm < edge - gap) on[i] = false;
     } else {
       if (cm < edge - gap) on[i] = true;
@@ -52,28 +52,32 @@ void loop() {
     if (on[i] && !was) since[i] = now;          // it just turned true: start its clock
   }
 
-  for (int i = 0; i < ROWS; i++) {              // top to bottom
+  current = -1;                                 // reset so stale states cannot stick
+  for (int i = 0; i < ROWS; i++) {               // top to bottom
     if (on[i] && now - since[i] >= rows[i].hold * 1000) {
-      current = i;                              // the first row held long enough wins
+      current = i;                               // the first row held long enough wins
       break;
     }
-  }                                             // no row held yet? the name stays as it was
+  }
+  if (current == -1) current = ROWS - 1;        // no row held long enough: default to the last row
 
-  switch (current) {                            // one response per name, no two the same
-    case 0:                                     // present: light on, buzzer sounds
+  switch (current) {                             // one response per name, no two the same
+    case 0:                                      // present: light on, buzzer sounds
       digitalWrite(LED, HIGH);
       tone(BUZZ, 440, 100);
       break;
-    case 1:                                     // nobody: light off, no sound
+    case 1:                                      // nobody: light off, no sound
       digitalWrite(LED, LOW);
       break;
-    default:                                    // dark and quiet until a row wins
+    default:                                     // dark and quiet until a row wins
       digitalWrite(LED, LOW);
   }
 
   Serial.print("cm ");
   Serial.print(cm, 1);
   Serial.print(" name ");
+  Serial.print(current + 1);                     // print 1-based row number for people
+  Serial.print(" ");
   Serial.println(rows[current].name);
 
   delay(50);
