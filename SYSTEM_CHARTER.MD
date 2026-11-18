@@ -37,3 +37,19 @@ The laptop webcam is a separate part of the planned experience. It can provide f
 
 1. The prototype sits on a table. An ultrasonic sensor detects when someone approaches and estimates their distance. A webcam above it represents the expression-sensing part of the concept. As visitors approach, the distance response activates first; the webcam can then contribute expression signals.
 2. The light communicates proximity through its blinking speed: faster means closer, slower means farther away, and no light means nobody is nearby. The Arduino and computer can use the centimeter reading internally to determine the Close, Medium, Far, or Gone state; visitors see the light response rather than an exact distance.
+
+# Distance charter + webcam (soon)
+It sees: distance and presence of a person.
+It calls you: nobody, present, rebellious (future additinoal webcam)
+It does: blinks on a red LED light (solid red LED light for now), turns off when presence not detected (blinks for now)
+ For them:  Piece creates an experience that implies a surveillance, tracking, and detection.
+ To them: Makes the person feel watched.
+ It refuses: To provide exact distances, (for the webcam) to be actual in saving the person's info.
+ Set aside:
+ Sits next to: Webcam, reading someone's presence and distance, the webcam grabbing those interpretations and interpreting how the subject appears.
+ The tension: Feeling of being tracked (even without save data), and the feeling of smile enforcement (for later in the piece).
+
+--- Row ---
+| present | 6.8, 10.0, 78.6 | 100 | 0 | 1 second | Visitor learns it by coming closer to the Arduino. | Piece emits a red light (progressively will flash faster and faster when updated) | For them: indicates their presence. / To them: makes them feel noticed by activating an outlet to let the person know they are. | Carlos B. |
+|---|---|---|---|---|---|---|---|---|
+| nobody | 400.0, 103.9, 129.1 cm | 100 | 0 | 0 s (could be fixed to 3 seconds) | Red LED flickers (could be updated to turn off instead) | D5: red LED on | For them: it indicates absence. To them: nothing. |  Visitor learns it by walking away or stepping back. | Carlos B. |
