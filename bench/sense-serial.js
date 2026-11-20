@@ -18,12 +18,11 @@ const readout = document.querySelector('#readout');
 // returns a number from 0 to 1. Its name has to match a name in table.js signals.
 
 const SIGNALS = {
-  // near: 1 at the sensor, 0 at two metres or more.
-  near: r => (r.cm === undefined ? 0 : clamp((200 - r.cm) / 190)),
+  // Crosses 0.5 at the matching State Table line (30 cm).
+  near: r => (r.cm === undefined ? 0 : clamp((35 - r.cm) / 10)),
 
-  // present: somebody within 100 cm. This matches the bench table logic in
-  // names-distance.ino: under 100 cm is present, over 100 cm is nobody.
-  present: r => (r.cm !== undefined && r.cm < 100 ? 1 : 0),
+  // Crosses 0.5 at 100 cm; the web table calls the middle band "far".
+  present: r => (r.cm === undefined ? 0 : clamp((105 - r.cm) / 10)),
 
   // Your signal goes here. A photoresistor printed as "light":
   //   shade: r => (r.light === undefined ? 0 : clamp(1 - r.light / 1023)),

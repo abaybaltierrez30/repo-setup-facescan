@@ -1,99 +1,77 @@
-# Sensor Layer starter
+# The Doorman
 
-Computer Coding Studio, fall 2026. The camera, the model, one worked signal and a fake sensor, so your pair starts from a piece that already runs.
+## Charter
 
-**Live:** https://flyinthelyceum.github.io/sensor-layer-starter/ (click Start the camera; press D, B, V)
+**It notices:** how close an object is to the HC-SR04 sensor.
 
-## Make it yours
+**It calls you:** Near, Far or Nobody.
 
-1. Click **Use this template**, then **Create a new repository**, under one partner's account. Add the other partner as a collaborator (Settings, Collaborators).
-2. Both partners clone it, open it in VS Code, and run it with a local server. Live Server works, or in the terminal: `python3 -m http.server`, then open `http://localhost:8000`. Opening `index.html` straight from the Finder will not reach the camera.
-3. Turn on GitHub Pages: Settings, Pages, branch `main`, folder `/ (root)`. That address is the live URL you submit.
+**It does:** hold a steady red light for Near, blink slowly for Far, and go dark for Nobody.
 
-## The files
+### For them
 
-| File | Job | Who edits it |
-|---|---|---|
-| `table.js` | Your State Table, row for row: the signals, the states, the rules, the holds | both of you, first |
-| `sense.js` | Reads the camera, turns readings into signals, applies the table, writes `window.sense` | each partner, your own signal |
-| `piece.js` | Reads `window.sense` every frame and answers | both of you |
-| `fake-sense.js` | Writes the same object with no camera: number keys set the state, the mouse sets the signals | only if your signal names change |
-| `index.html` | Loads them in order | rarely |
+- **Near:** a steady red light marks the close boundary.
+- **Far:** a slow blink marks the outer distance band.
+- **Nobody:** the light goes dark after the room has stayed empty.
 
-## The object
+### To them
 
-```js
-window.sense = {
-  state: 'here',                          // one word from your State Table
-  signals: { present: 0.98, open: 0.02 }, // each a number from 0 to 1
-  since: 184203.5                         // performance.now() when this state began
-};
-```
+- **Near:** Danny's name makes closeness visible.
+- **Far:** Alexander's name turns distance into a slower signal.
+- **Nobody:** the group's name for absence is silence, not a stored identity.
 
-`piece.js` reads this and nothing else. It never touches the camera. That is why the piece keeps running on `fake-sense.js` when no camera is there, and why a scene you build in November can run off the sensor you build now.
+**It refuses:** to identify a face, remember a visitor, or count visits. The word is a label made from distance alone, not a fact about the person.
 
-## Adding your signal
+## State Table
 
-1. Add its name to `signals` in `table.js`.
-2. Add a function with the same name to `SIGNALS` in `sense.js`. It gets one frame's result and returns a number from 0 to 1. There are two patterns in the comments there: one of the 52 named scores from the lab, or geometry from the 478 points.
-3. Use it in a rule in `table.js`. Press **D** to watch the number while you set the threshold. Thresholds that move go in your break log.
+The Nano runs these rows from the HC-SR04 reading in centimeters. `GAP` is hysteresis: an inactive row must cross the far edge of the gap to start; the current row remains true through the gap. A candidate must keep winning for its full hold before the name changes.
 
-## Keys
+| Name | Owner | Distance rule (`LINE`) | `GAP` | Hold | Nano response |
+|---|---|---|---:|---:|---|
+| Near | Danny Girdish | Under 30 cm; enters below 25 cm and holds through 35 cm | 5 cm | 1 s | Steady red LED |
+| Far | Alexander Bay Baltierrez | 30-100 cm; LINEs at 30 and 100 cm | 5 cm at each edge | 1 s | Red LED blinks slowly |
+| Nobody | Group | Over 100 cm; enters above 105 cm and holds from 95 cm up | 5 cm | 5 s | LED off |
 
-- **D**: the object `piece.js` reads, live
-- **B**: all 52 named scores, to find the one you measured in the Make a Face lab
-- **V**: the camera, small, in the corner
-- **1, 2, 3 …** and the **mouse**: drive the fake sensor before the camera starts
+On startup, the Nano begins with no assigned name; it waits for the matching row's hold. Far enters above 35 cm and through 105 cm when coming from Near, or from 25 cm to below 95 cm when coming from Nobody; it stays active from 25-105 cm. A missing echo reads as 400 cm. If the LED flickers at an edge, increase `GAP` in `bench/names-distance/names-distance.ino`.
 
-## When Start does nothing useful
+The optional browser bench uses the same three names and holds, but its own smoothed readings. It is not needed for the physical piece.
 
-If the readout says the face library did not load, the school network is blocking `cdn.jsdelivr.net`. Press **D** and keep going on the fake sensor: the piece reads the same object either way. A new state you add to `table.js` gets a bright colour of its own in `piece.js` until you give it one.
+## Wiring and build
 
-## Bench pairs: an Arduino instead of the camera
+The prototype uses one sensor only. The Nano reads the sensor and runs every name itself; the laptop is not part of the final interaction.
 
-The bench track swaps the sense layer and nothing else. `piece.js` and `fake-sense.js` stay exactly as they are. The wiring, a photo of a working build and upload fixes are in `bench/README.md`.
+| Part | Connection |
+|---|---|
+| HC-SR04 VCC | Nano 5V |
+| HC-SR04 GND | Nano GND |
+| HC-SR04 TRIG | Nano D9 |
+| HC-SR04 ECHO | Nano D10 |
+| Red LED long leg | Nano D5 |
+| Red LED short leg | 220 ohm resistor, then GND |
 
-Important: Arduino IDE uploads a single sketch folder, not a loose `main.cpp` file. The PlatformIO project uses `src/main.cpp`, but the Arduino IDE must open a sketch such as `bench/bench/bench.ino` instead. The `bench` examples are stored in their own folders so each one uploads by itself.
+![Design photo of the Arduino Nano, HC-SR04, LED, breadboard, and wiring.](design.jpg)
 
-1. Build the circuit and flash `bench/bench/bench.ino` from the Arduino IDE by opening the `bench/bench` folder and choosing **Upload**. It prints one line per reading, like `cm 42.5`. Check it in the IDE's Serial Monitor at 115200, then **close the Serial Monitor**: only one program can hold the port.
-2. Open **`bench.html`** instead of `index.html`, on localhost in **Chrome**. It loads the bench table and the serial sense layer; nothing to edit.
-3. Click **Connect the Arduino** and pick the board. Press **D** to see the raw line and your signals.
-4. Your State Table lives in **`bench/table-bench.js`** (same format as `table.js`). Your signal is a function in `SIGNALS` in `bench/sense-serial.js`: it gets the latest reading (`{ cm: 42.5 }`) and returns 0 to 1. Add the sensor to the sketch's printed line, then its function, then its name in `bench/table-bench.js`.
+![Photo of the assembled Nano, HC-SR04, LED, and breadboard.](finished-piece.jpg)
 
-## What stays in the browser
+Print [`bench/state-legend.svg`](bench/state-legend.svg) and place it beside the LED so visitors can read the name each light pattern means. The wall label is separate; print [`LABEL.md`](LABEL.md), sign and date it in class, and place it face down beside the piece.
 
-Nothing saves a frame or a landmark list. The model downloads once when you click Start; after that the Network panel stays quiet. Keep it that way: no `localStorage` of readings, no uploads, no screenshots of the camera image in the repo. Screenshots for your break log show the piece or the D readout.
+## How to run it
 
-The instrument is MediaPipe Face Landmarker, pinned to version 1.1.1, the same one the Make a Face lab used.
+1. Wire the HC-SR04 and LED as shown above, then upload `bench/names-distance/names-distance.ino` to the Nano in the Arduino IDE.
+2. For a one-time check, open Serial Monitor at 115200 baud and look for lines such as `cm 23.6 name near`; close Serial Monitor afterward.
+3. Power the Nano from a power bank or USB wall charger; it starts on plug-in and runs all three names without a laptop.
+
+## Break log
+
+- **Nov 12, PR #11 / Issue #6:** The Nobody response needed to explicitly leave the LED off. The sketch now sets the LED low for that row.
+- **Nov 16, PR #12:** The Arduino IDE needs a sketch folder, not the PlatformIO `src/main.cpp` file. The run instructions now point to the standalone `.ino`.
+- **Nov 16:** The browser and Serial Monitor cannot share the Nano's serial port. Close Serial Monitor before connecting the optional browser bench.
 
 ## Credits
 
-- Danny Girdish
-- Alexander Bay Baltierrez
-- Sensor: laptop webcam
-- Live: https://abaybaltierrez30.github.io/repo-setup-facescan/
-
-## Rule:
-
-When the reading goes under 100 cm, someone's presence is detected and listed.
-Three reading examples:
-cm 42.7 name 1 present
-cm 62.6 name 1 present
-cm 123.5 name 2 nobody
-
-## Break log:
-Merge pull request #12 (not finished yet as of writing): Porting INO changes from VS Code to Arduino IDE. Technical difficulties made porting INO code data from VS Code to the Arduino IDE app a hassle, until we eventually realized we had to upload in the IDE app to process our changes.
-Merge pull request #12/#11/fixes #6: nobody state leaves LED off - LED doesn't go off. Instead, it blinks, but the files we have been working with hint to blinking when off, so we are keeping the blinking in "nobody" state for now.
-(Some commit between Isolate standalone and #11:) - Readings failing to sync up with localhost sensor website. We have synced the code to the IDE and tested both the IDE and localhost to check and also get the readings working.
-
-## Photos/wiring: 
-Wiring:
-sensor TRIG to 5V (C12 on board) from H20 on board (VCC ultrasonic)
-sensor ECHO to D10 (J3 on board) from I18 on board (Echo ultrasonic)
-LED long leg (B17 on board from wire) to D5 (I8 on board), 
-GND on ultrasonic (I17 on board) to GND on Arduino board (C14)
-TRIG on ultrasonic (I19 on board) to  D9 (J4 on board)
-Photos:
-- [IMG_0426.HEIC](bench/img/IMG_0426.HEIC)
-- [IMG_0427.HEIC](bench/img/IMG_0427.HEIC)
-
+- **Danny Girdish:** owns the Near row and its steady-light response.
+- **Alexander Bay Baltierrez:** owns the Far row and its slow-blink response.
+- **Both members:** own the Nobody row and the shared Nano, sensor, wiring, and enclosure.
+- **Sensor:** one HC-SR04 ultrasonic distance sensor.
+- **Materials:** Arduino Nano, breadboard, jumper wires, red LED, 220 ohm resistor, USB power bank or USB wall charger.
+- **Year:** 2026.

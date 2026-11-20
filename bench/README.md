@@ -1,6 +1,6 @@
 # The bench track
 
-An Arduino Nano and two sensors in place of the camera. The bench swaps the sensor and nothing else: `piece.js` and `fake-sense.js` stay exactly as they are, and your State Table works the same way. Bench pairs open `bench.html` instead of `index.html`, and write their rows in `bench/table-bench.js` instead of `table.js`. The steps are in the main README, under **Bench pairs**.
+The physical prototype uses one HC-SR04 and an Arduino Nano. The Nano runs the Near, Far, and Nobody rows and their LED responses on its own; `bench.html` is only an optional browser readout. Do not add a second sensor until all names work with this one.
 
 **Simple sensor first.** Every pair builds with sensors from the shelf below, the simple tier, and gets them working in the browser before anything else. An advanced sensor is a second sensor, added after the simple one works, never instead of it.
 
@@ -10,9 +10,9 @@ The kits come apart, so building the circuit is part of your work.
 
 Important: in the Arduino IDE, each sketch must live in its own folder. Open the folder that matches the sketch you want to upload, such as `bench/bench/` for the simple distance sensor, then click **Upload**. Do not try to upload `src/main.cpp` from this repo in the Arduino IDE; that file is only for PlatformIO.
 
-1. A Nano, a breadboard and jumpers from the north racks in the Innovation Commons. If the Nano's header pins aren't soldered yet, that comes first. Ask Mr. Reasy before you heat an iron.
-2. Two sensors on the one Nano, one per partner. Wire each one and check it in the Arduino IDE's Serial Monitor at 115200 before the browser sees it.
-3. Add your sensor's number to the line `bench.ino` prints (`Serial.print(" light "); Serial.print(analogRead(A0));`), then its function in `SIGNALS` in `sense-serial.js`, then its name in `bench/table-bench.js`.
+1. Use a Nano, breadboard, HC-SR04, LED, 220 ohm resistor, and jumpers. If the Nano's header pins are not soldered, ask Mr. Reasy before soldering.
+2. Wire one sensor and test its numbers in the Arduino IDE Serial Monitor at 115200. Close the monitor before any browser connection.
+3. `bench/names-distance/names-distance.ino` is the stand-alone three-name build. `bench/bench/bench.ino` is the optional raw serial reader for `bench.html`.
 
 ## The reference build
 
@@ -39,13 +39,13 @@ This one works, end to end: a Nano and an HC-SR04 on a breadboard, with an optio
 
 *Ours is a US-025A, a clone of the HC-SR04. Same four pins in the same order (VCC, Trig, Echo, GND), same wiring, same sketch. Either board works.*
 
-Flash `bench/bench/bench.ino` for the sensor alone by opening the `bench/bench` folder in the Arduino IDE. Open `bench.html` on localhost in Chrome, click **Connect the Arduino**, and pick the board. Press **D**: a hand at about 40 cm or closer reads `close`, further away reads `here`, and an empty room reads `nobody` after two seconds.
+Flash `bench/names-distance/names-distance.ino` from its folder in the Arduino IDE. The Nano starts in a waiting state and begins naming only after a row has held. Near enters below 25 cm; Far enters above 35 cm and through 105 cm from Near, or from 25 cm to below 95 cm from Nobody; Nobody enters above 105 cm. Their holds are 1, 1, and 5 seconds. To try the optional browser mirror instead, upload `bench/bench/bench.ino`, open `bench.html` on localhost in Chrome, connect the Arduino, and press **D**.
 
 ### Standalone Arduino examples
 
-The `distance-led` and `names-distance` folders are optional Arduino sketches for trying a local LED response or a small state table. Open each folder's matching `.ino` file as its own sketch in the Arduino IDE. Keep these sketches in their separate folders: Arduino compiles `.ino` files together when they are in the same sketch folder. For the browser piece, keep using `bench/bench.ino`, which prints the sensor reading for `bench.html`.
+The `distance-led` folder is an earlier one-state LED example. `names-distance` is the finished stand-alone state-table sketch. Open each folder's `.ino` file as its own sketch in the Arduino IDE; Arduino compiles `.ino` files together when they share a sketch folder.
 
-**The lag is the table, not the wire.** Each row's hold (0.5, 1 and 2 seconds in `bench/table-bench.js`) is how long a rule has to stay true before the state changes, and the readings are smoothed so one bad echo doesn't count. Short holds feel instant and flicker; long holds feel calm and slow. Choosing them is part of your table.
+**The lag is the table, not the wire.** Near and Far each hold for 1 second; Nobody holds for 5 seconds. In the Nano sketch, `GAP` is 5 cm at each line. If the LED flickers near a line, increase `GAP`; if the response feels too slow, adjust that row's hold.
 
 **If the upload fails** with `not in sync` or `programmer is not responding`, the Nano has the old bootloader, which is common on clone boards. In the Arduino IDE choose **Tools → Processor → ATmega328P (Old Bootloader)** and upload again (in `arduino-cli`, the board is `arduino:avr:nano:cpu=atmega328old`). After a failed upload, unplug the Nano and plug it back in before the next try, because the port can stay stuck.
 
