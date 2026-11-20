@@ -33,6 +33,13 @@ function frame() {
   ctx.fillStyle = colorFor(state);
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = state === 'nobody' ? '#f2efe9' : '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `700 ${Math.round(Math.min(canvas.width, canvas.height) * 0.08)}px system-ui, sans-serif`;
+  ctx.fillText(state.toUpperCase(), canvas.width / 2, canvas.height * 0.12);
+
   if (state !== 'nobody') {
     const r = Math.min(canvas.width, canvas.height) * (0.05 + 0.35 * signalValue);
     const fadeIn = Math.min(1, held / 600);
