@@ -1,4 +1,4 @@
-// oled_demo.ino: bench.ino plus a 0.96in OLED readout, for the demo.
+// oled_and_led_distancedemo.ino: Near/Far/Nobody distance states with OLED and LED output.
 //
 // Same serial output as bench.ino ("cm 42.5" lines at 115200), so
 // sense-serial.js works unchanged. The screen is extra. On the two-colour
@@ -9,7 +9,9 @@
 // Wiring, Arduino Nano:
 //   HC-SR04  VCC -> 5V    GND -> GND    TRIG -> D9    ECHO -> D10
 //   OLED     VCC -> 5V    GND -> GND    SDA  -> A4    SCL  -> A5
-// The OLED is an SSD1306, 128 x 64, I2C at 0x3C. Needs the U8g2 library.
+//   LED      long leg -> D5; short leg -> 220 ohm resistor -> GND
+// The OLED is an SSD1306, 128 x 64, I2C at 0x3C. Install "U8g2" by olikraus
+// from Arduino IDE's Library Manager before compiling this sketch.
 
 #include <U8g2lib.h>
 #include <Wire.h>
@@ -20,10 +22,27 @@ U8G2_SSD1306_128X64_NONAME_1_HW_I2C oled(U8G2_R0, U8X8_PIN_NONE);
 
 const int TRIG = 9;
 const int ECHO = 10;
+const int LED = 5;
 
-const float NEAR_CM = 30.0;      // badge thresholds for the screen only;
-const float HERE_CM = 120.0;     // the real State Table lives in the browser
 const float MAX_CM = 200.0;      // top of the graph and the sonar range
+
+enum Band { BELOW, BETWEEN, ABOVE };
+
+struct Row {
+  const char* name;
+  Band band;
+  float lower;
+  float upper;
+  float gap;
+  unsigned long holdMs;
+};
+
+Row rows[] = {
+  { "near",    BELOW,       0,     30,   5, 1000UL },
+  { "far",     BETWEEN,    30,    100,   5, 1000UL },
+  { "nobody",  ABOVE,     100,      0,   5, 5000UL },
+};
+const int ROWS = sizeof(rows) / sizeof(rows[0]);
 
 const int GRAPH_H = 10;          // the trace, rows 53 to 63
 uint8_t hist[128];               // one column per reading, 0..GRAPH_H
@@ -36,6 +55,9 @@ uint8_t ping = 0;                // expanding ring radius
 uint8_t rate = 0;                // readings in the last second, for the header
 uint8_t count = 0;
 unsigned long rateStart = 0;
+int current = -1;
+int candidate = -1;
+unsigned long candidateSince = 0;
 
 float readCm() {
   digitalWrite(TRIG, LOW);
@@ -45,6 +67,69 @@ float readCm() {
   digitalWrite(TRIG, LOW);
   unsigned long us = pulseIn(ECHO, HIGH, 30000);
   return us ? us / 58.0 : 400.0;
+}
+
+bool rowIsTrue(const Row& row, float cm, bool active) {
+  if (!active) {
+    if (current < 0) {
+      if (row.band == BELOW) return cm < row.upper;
+      if (row.band == BETWEEN) return cm >= row.lower && cm <= row.upper;
+      return cm > row.lower;
+    }
+
+    if (row.band == BELOW) return cm < row.upper - row.gap;
+    if (row.band == BETWEEN) {
+      if (current == 0) {
+        return cm > row.lower + row.gap && cm <= row.upper + row.gap;
+      }
+      if (current == ROWS - 1) {
+        return cm >= row.lower - row.gap && cm < row.upper - row.gap;
+      }
+      return cm > row.lower + row.gap && cm < row.upper - row.gap;
+    }
+    return cm > row.lower + row.gap;
+  }
+
+  if (row.band == BELOW) return cm <= row.upper + row.gap;
+  if (row.band == BETWEEN) {
+    return cm >= row.lower - row.gap && cm <= row.upper + row.gap;
+  }
+  return cm >= row.lower - row.gap;
+}
+
+int winningRow(float cm) {
+  for (int i = 0; i < ROWS; i++) {
+    if (rowIsTrue(rows[i], cm, current == i)) return i;
+  }
+  return -1;
+}
+
+void updateName(float cm, unsigned long now) {
+  const int winner = winningRow(cm);
+  if (winner < 0 || winner == current) {
+    candidate = -1;
+    return;
+  }
+
+  if (winner != candidate) {
+    candidate = winner;
+    candidateSince = now;
+  }
+
+  if (now - candidateSince >= rows[candidate].holdMs) {
+    current = candidate;
+    candidate = -1;
+  }
+}
+
+void answer(unsigned long now) {
+  if (current == 0) {
+    digitalWrite(LED, HIGH);
+  } else if (current == 1) {
+    digitalWrite(LED, (now / 500UL) % 2 == 0 ? HIGH : LOW);
+  } else {
+    digitalWrite(LED, LOW);
+  }
 }
 
 void splash() {
@@ -59,19 +144,19 @@ void splash() {
   }
 }
 
-void drawHeader(float cm) {
+void drawHeader(int state) {
   // Rows 0-15, the yellow strip: state badge left, readings per second right.
-  const char *label = cm < NEAR_CM ? "NEAR" : cm < HERE_CM ? "HERE" : "EMPTY";
+  const char *label = state < 0 ? "STARTING" : rows[state].name;
   oled.setFont(u8g2_font_6x12_tr);
   int w = oled.getStrWidth(label) + 8;
-  if (cm < NEAR_CM) {              // near: solid badge
+  if (state == 0) {
     oled.drawRBox(0, 1, w, 13, 3);
     oled.setDrawColor(0);
-    oled.drawStr(4, 11, label);
+    oled.drawStr(4, 11, "NEAR");
     oled.setDrawColor(1);
   } else {
     oled.drawRFrame(0, 1, w, 13, 3);
-    oled.drawStr(4, 11, label);
+    oled.drawStr(4, 11, state < 0 ? label : state == 1 ? "FAR" : "NOBODY");
   }
   char buf[8];
   oled.setFont(u8g2_font_5x8_tr);
@@ -114,7 +199,7 @@ void drawSonar(float cm) {
   if (cm < MAX_CM) {
     float r = cm / MAX_CM * R;
     int bx = ox + r * cos(a), by = oy + r * sin(a);
-    oled.drawDisc(bx, by, cm < NEAR_CM ? 3 : 2);
+    oled.drawDisc(bx, by, cm < rows[0].upper ? 3 : 2);
   }
 }
 
@@ -133,6 +218,7 @@ void setup() {
   Serial.begin(115200);          // sense-serial.js opens the port at this speed
   pinMode(TRIG, OUTPUT);
   pinMode(ECHO, INPUT);
+  pinMode(LED, OUTPUT);
   oled.begin();
   oled.setBusClock(400000);
   splash();
@@ -140,6 +226,9 @@ void setup() {
 
 void loop() {
   float cm = readCm();
+  unsigned long now = millis();
+  updateName(cm, now);
+  answer(now);
 
   Serial.print("cm ");
   Serial.print(cm, 1);
@@ -165,7 +254,7 @@ void loop() {
 
   oled.firstPage();
   do {
-    drawHeader(smooth);
+    drawHeader(current);
     drawNumber(smooth);
     drawSonar(smooth);
     drawGraph();

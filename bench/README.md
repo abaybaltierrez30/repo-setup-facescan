@@ -16,7 +16,7 @@ Important: in the Arduino IDE, each sketch must live in its own folder. Open the
 
 ## The reference build
 
-This one works, end to end: a Nano and an HC-SR04 on a breadboard, with an optional 0.96 in screen, read by `bench.html` in Chrome. Build yours to match first, then change it.
+This one works, end to end: a Nano and an HC-SR04 run the Near, Far, and Nobody states on the Arduino, with an optional OLED screen and LED response. Build yours to match first, then change it.
 
 ![The reference build: an Arduino Nano, an ultrasonic distance sensor and a 0.96 in OLED screen on a breadboard. The screen reads NEAR, 23.6 cm, with a sonar fan and a history trace.](img/build-overview.jpg)
 
@@ -30,6 +30,7 @@ This one works, end to end: a Nano and an HC-SR04 on a breadboard, with an optio
 | OLED (optional) | GND | GND |
 | OLED (optional) | SDA | A4 |
 | OLED (optional) | SCL | A5 |
+| LED | Long leg (anode) | D5; short leg (cathode) through a 220 ohm resistor to GND |
 
 ![The Nano close up, USB end at the top. Two wires on the right side at D9 and D10 go to the sensor; on the left side, wires at A4 and A5 go to the screen, and 5V and GND feed both.](img/nano-pins.jpg)
 
@@ -39,23 +40,25 @@ This one works, end to end: a Nano and an HC-SR04 on a breadboard, with an optio
 
 *Ours is a US-025A, a clone of the HC-SR04. Same four pins in the same order (VCC, Trig, Echo, GND), same wiring, same sketch. Either board works.*
 
-Flash `bench/bench/bench.ino` for the sensor alone by opening the `bench/bench` folder in the Arduino IDE. Open `bench.html` on localhost in Chrome, click **Connect the Arduino**, and pick the board. Press **D**: a hand at about 40 cm or closer reads `close`, further away reads `here`, and an empty room reads `nobody` after two seconds.
+Flash `bench/names-distance/names-distance.ino` for the state-table build with LED responses. To run the OLED and LED together, upload `bench/oled_and_led_distancedemo/oled_and_led_distancedemo.ino` instead. Near enters below 30 cm, Far covers the middle band through 100 cm, and Nobody enters above 100 cm. Near and Far hold for 1 second; Nobody holds for 5 seconds. Only one sketch runs on the Nano at a time. To use the optional browser readout, flash `bench/bench/bench.ino` instead, open `bench.html` on localhost in Chrome, connect the Arduino, and press **D**.
 
 ### Standalone Arduino examples
 
-The `distance-led` and `names-distance` folders are optional Arduino sketches for trying a local LED response or a small state table. Open each folder's matching `.ino` file as its own sketch in the Arduino IDE. Keep these sketches in their separate folders: Arduino compiles `.ino` files together when they are in the same sketch folder. For the browser piece, keep using `bench/bench.ino`, which prints the sensor reading for `bench.html`.
+The `distance-led` folder is an earlier one-state LED example. `names-distance` runs the Near, Far, and Nobody states and their LED responses. Open each folder's `.ino` file as its own sketch in the Arduino IDE. Keep the sketches in separate folders: Arduino compiles `.ino` files together when they are in the same sketch folder.
 
-**The lag is the table, not the wire.** Each row's hold (0.5, 1 and 2 seconds in `bench/table-bench.js`) is how long a rule has to stay true before the state changes, and the readings are smoothed so one bad echo doesn't count. Short holds feel instant and flicker; long holds feel calm and slow. Choosing them is part of your table.
+**The lag is the table, not the wire.** Near and Far each hold for 1 second; Nobody holds for 5 seconds. The 5 cm gap around each boundary prevents flicker as readings wobble near a line.
 
 **If the upload fails** with `not in sync` or `programmer is not responding`, the Nano has the old bootloader, which is common on clone boards. In the Arduino IDE choose **Tools → Processor → ATmega328P (Old Bootloader)** and upload again (in `arduino-cli`, the board is `arduino:avr:nano:cpu=atmega328old`). After a failed upload, unplug the Nano and plug it back in before the next try, because the port can stay stuck.
 
 ### The screen (optional)
 
-`bench/oled_demo/oled_demo.ino` is `bench.ino` plus a readout on a 0.96 in SSD1306 screen (128 x 64, I2C): a state badge, the distance in big digits, a sonar sweep with a dot at the measured range, and a scrolling trace of the history. It prints the same lines over USB, so `bench.html` works with it unchanged. It needs the **U8g2** library (Arduino IDE → Library Manager). On the two-colour screens the top strip is yellow and holds the status.
+`bench/oled_and_led_distancedemo/oled_and_led_distancedemo.ino` runs the same Near, Far, and Nobody distance bands and holds as `names-distance.ino`, and drives both the D5 LED and the OLED: Near is steady, Far blinks every 500 ms, and Nobody is off. The OLED shows the state badge, distance, sonar sweep, and reading history on a 0.96 in SSD1306 screen (128 x 64, I2C). The LED on D5 does not conflict with the OLED's I2C pins A4/A5 or the sensor pins D9/D10. The sketch continues to print `cm` readings over USB for `bench.html`. On two-colour screens the top strip is yellow and holds the current state.
+
+**If compiling says `U8g2lib.h: No such file or directory`:** install the **U8g2** library by **olikraus** in Arduino IDE's Library Manager (Sketch → Include Library → Manage Libraries, then search for `U8g2`). Install **U8g2**, not the older **U8glib** library, then compile again.
 
 ![Three photos of the screen side by side: EMPTY reading 400 cm with no echo, HERE at 51.5 cm, NEAR at 7.2 cm with a large dot on the sonar.](img/screen-states.jpg)
 
-*Three states, three thresholds: EMPTY when nothing echoes back (this photo predates the fix that shows `---` instead of 400), HERE closer than 120 cm, NEAR closer than 30 cm. That's a State Table, drawn on a screen. Yours will have different words and different numbers.* The screen's badge thresholds are for the screen only; your real State Table still lives in the browser. It's an extra for after the sensor works, never instead of it.
+*The screen shows Near below 30 cm, Far in the middle band, and Nobody beyond 100 cm; each state changes only after its hold time. The display also shows the live distance, sonar sweep, and reading history.*
 
 ## What's on the shelf
 
