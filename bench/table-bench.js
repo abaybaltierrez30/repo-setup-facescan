@@ -5,20 +5,15 @@
 // (each 0 to 1, named in its SIGNALS), states are checked top to bottom and the
 // first true row wins.
 //
-// hold is in seconds: how long a rule must stay true before the state changes.
-// It is a tradeoff you choose per row. A short hold feels instant but flickers
-// when a reading wobbles near its line; a long hold is calm but slow. These
-// example rows use 0.5, 1 and 2, the same as the working reference build.
-// Keep "nobody" last, so it catches everything the other rows miss.
+// Hold is in seconds, matching names-distance.ino. The browser table is only an
+// optional mirror; the Nano runs these names and responses without a computer.
 
 window.TABLE = {
-  // Matches the two rows in names-distance.ino:
-  // - present: distance under 100 cm for 1 second
-  // - nobody: distance over 100 cm for 5 seconds
-  signals: ['present'],
+  signals: ['near', 'present'],
 
   states: [
-    { name: 'present', when: s => s.present > 0.8, hold: 1.0 },
-    { name: 'nobody',  when: s => s.present < 0.2, hold: 5.0 },
+    { name: 'near',    when: s => s.near > 0.5, hold: 1.0 },
+    { name: 'far',     when: s => s.present > 0.5 && s.near <= 0.5, hold: 1.0 },
+    { name: 'nobody',  when: s => s.present <= 0.5, hold: 5.0 },
   ],
 };
